@@ -29,7 +29,7 @@ use RPC::ExtDirect::EventProvider;
 # Version of the module
 #
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 ### PUBLIC INSTANCE METHOD (CONSTRUCTOR) ###
 #
@@ -314,7 +314,7 @@ In your app.psgi:
                         poll_path    => '/extdirect_events',
                         remoting_var => 'Ext.app.REMOTING_API',
                         polling_var  => 'Ext.app.POLLING_API',
-                        namespace    => 'myApp',    # Defaults to ''
+                        namespace    => 'myApp',    # Defaults to empty
                         auto_connect => 0,
                         no_polling   => 0,
                         debug        => 0;
@@ -342,7 +342,7 @@ where and what error has happened.
 For RPC::ExtDirect attribute handlers to work properly, modules that
 expose ExtDirect Methods should be loaded at compile time. On the other
 hand, Plack::Runner loads and compiles code in *.psgi at runtime, and
-that breaks attribute magic dust. To avoid breaking things, just make
+that breaks attribute magic dust. To avoid this, just make
 sure you load all modules that provide Ext.Direct functionality -
 including Event providers - before Plack::Runner starts. The easiest
 way to do this is to copy plackup script and modify it a little to
@@ -353,10 +353,7 @@ See included code examples to see how it works.
 =head1 DEPENDENCIES
 
 Plack::Middleware::ExtDirect is dependent on the following modules:
-    L<Plack>
-    L<RPC::ExtDirect>
-    L<JSON>
-    L<Attribute::Handlers>
+L<Plack>, L<RPC::ExtDirect>, L<JSON>, L<Attribute::Handlers>.
 
 =head1 SEE ALSO
 
@@ -371,7 +368,8 @@ use it.
 
 =head1 BUGS AND LIMITATIONS
 
-There are no known bugs in this module.
+There are no known bugs in this module. To report bugs, use CPAN RT
+(the best way) or just drop me an e-mail. Patches are welcome.
 
 =head1 AUTHOR
 
