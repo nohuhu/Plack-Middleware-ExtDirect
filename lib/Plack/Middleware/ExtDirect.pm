@@ -29,7 +29,7 @@ use RPC::ExtDirect::EventProvider;
 # Version of the module
 #
 
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 
 ### PUBLIC INSTANCE METHOD (CONSTRUCTOR) ###
 #

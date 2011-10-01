@@ -7,6 +7,7 @@ builder {
     enable 'ExtDirect', api_path    => 'php/api.php',
                         router_path => 'php/router.php',
                         poll_path   => 'php/poll.php',
+                        debug       => 1,
                         ;
 
     sub {[ 301,
