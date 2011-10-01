@@ -5,6 +5,10 @@ Revision history for Perl extension Plack::Middleware::ExtDirect.
       handling works properly now, there's no sense in turning
       it off anymore.
 
+      Updated examples.pl to include fresh-built module
+      Plack::Middleware::ExtDirect so that examples could be
+      tried without installing the module.
+
       Bumped required RPC::ExtDirect version to 1.10.
 
 1.01  Fri Sep 30 10:22:33 2011

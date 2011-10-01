@@ -13,6 +13,8 @@ use RPC::ExtDirect::Demo::Profile;
 use RPC::ExtDirect::Demo::TestAction;
 use RPC::ExtDirect::Demo::PollProvider;
 
+use lib '../blib/lib';
+
 use Plack::Runner;
 
 my $runner = Plack::Runner->new;
