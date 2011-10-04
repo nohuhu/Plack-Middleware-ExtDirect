@@ -9,10 +9,12 @@ WriteMakefile(
     VERSION_FROM      => 'lib/Plack/Middleware/ExtDirect.pm', # finds $VERSION
     PREREQ_PM         => {
         'Plack'          => '0.9982',
-        'RPC::ExtDirect' => '1.10',
+        'RPC::ExtDirect' => '1.20',
         'Test::More'     => 0,
     },
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
       (ABSTRACT => 'RPC::ExtDirect gateway for Plack environment',
-       AUTHOR   => 'Alexander Tokarev <nohuhu@apple.com>') : ()),
+       AUTHOR   => 'Alexander Tokarev <nohuhu@apple.com>',
+       LICENSE  => 'perl',
+      ) : ()),
 );
