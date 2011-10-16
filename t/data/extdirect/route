@@ -10,8 +10,7 @@
         q|{"action":null,"message":"ExtDirect error decoding POST data: |.
         q|            ', or } expected while parsing object/hash,|.
         q|             at character offset 22 (before \":\"here\"}\")'",|.
-        q| "method":null, "tid":null,|.
-        q| "type":"exception",|.
+        q| "method":null, "tid": null, "type":"exception",|.
         q| "where":"RPC::ExtDirect::Deserialize->decode_post"}|,
     },
     {
@@ -60,7 +59,8 @@
             form_post('http://localhost/router',
                       action => '/router.cgi', method => 'POST',
                       extAction => 'Bar', extMethod => 'bar_baz',
-                      extTID => 123, field1 => 'foo', field2 => 'bar'),
+                      extTID => 123, field1 => 'foo', field2 => 'bar',
+                      extType => 'rpc'),
         http_status => 200, content_type => qr|^application/json\b|,
         expected_content =>
                   q|{"action":"Bar","method":"bar_baz",|.
@@ -77,7 +77,7 @@
                         ['qux.txt'],
                         action => '/router.cgi', method => 'POST',
                         extAction => 'JuiceBar', extMethod => 'bar_baz',
-                        extTID => 7, foo_field => 'foo',
+                        extTID => 7, extType => 'rpc', foo_field => 'foo',
                         bar_field => 'bar', extUpload => 'true',),
         http_status => 200, content_type => qr|^text/html\b|,
         expected_content =>
@@ -102,7 +102,8 @@
                         ['foo.jpg', 'bar.png', 'script.js'],
                         action => '/router.cgi', method => 'POST',
                         extAction => 'JuiceBar', extMethod => 'bar_baz',
-                        extTID => 8, field => 'value', extUpload => 'true'),
+                        extTID => 8, field => 'value', extUpload => 'true',
+                        extType => 'rpc'),
         http_status => 200, content_type => qr|^text/html\b|,
         expected_content =>
                   q|<html><body><textarea>|.

@@ -29,7 +29,7 @@ use RPC::ExtDirect::EventProvider;
 # Version of the module
 #
 
-our $VERSION = '1.03';
+our $VERSION = '1.10';
 
 ### PUBLIC INSTANCE METHOD (CONSTRUCTOR) ###
 #
@@ -202,10 +202,6 @@ sub _handle_events {
 # goes too wrong to recover.
 #
 
-my @STANDARD_KEYWORDS
-    = qw(action method extAction extMethod extTID extUpload);
-my %STANDARD_KEYWORD = map { $_ => 1 } @STANDARD_KEYWORDS;
-
 sub _extract_post_data {
     my ($self, $req) = @_;
 
@@ -250,6 +246,9 @@ sub _extract_post_data {
 
         $keyword{ '_uploads' } = \@field_uploads if @field_uploads;
     };
+
+    # Remove extType because it's meaningless later on
+    delete $keyword{ extType };
 
     # Fix TID so that it comes as number (JavaScript is picky)
     $keyword{ extTID } += 0 if exists $keyword{ extTID };

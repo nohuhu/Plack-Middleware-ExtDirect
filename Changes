@@ -1,4 +1,7 @@
-Revision history for Perl extension Plack::Middleware::ExtDirect.
+1.10  Mon Oct 17 00:43:11 2011
+    - Fixed a (small) bug: extType parameter in form-based remoting
+      calls was not caught and cleaned out before passing data hash
+      to Method for execution.
 
 1.03  Tue Oct  4 21:37:23 2011
     - Bumped required RPC::ExtDirect version to 1.20.

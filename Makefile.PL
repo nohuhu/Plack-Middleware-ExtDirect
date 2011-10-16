@@ -14,7 +14,13 @@ WriteMakefile(
     },
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
       (ABSTRACT => 'RPC::ExtDirect gateway for Plack environment',
-       AUTHOR   => 'Alexander Tokarev <nohuhu@apple.com>',
+       AUTHOR   => 'Alexander Tokarev <tokarev@cpan.org>',
        LICENSE  => 'perl',
       ) : ()),
+    META_MERGE => {
+        resources   => {
+            bugtracker  => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=Plack-Middleware-ExtDirect',
+            repository  => 'http://github.com/nohuhu/Plack-Middleware-ExtDirect',
+        },
+    },
 );
