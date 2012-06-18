@@ -16,7 +16,8 @@ use Plack::Util::Accessor qw( api_path      router_path
                               poll_path     namespace
                               remoting_var  polling_var
                               auto_connect  debug
-                              no_polling
+                              no_polling    before
+                              instead       after
                             );
 
 use RPC::ExtDirect::Config;
@@ -29,7 +30,7 @@ use RPC::ExtDirect::EventProvider;
 # Version of the module
 #
 
-our $VERSION = '1.10';
+our $VERSION = '2.00';
 
 ### PUBLIC INSTANCE METHOD (CONSTRUCTOR) ###
 #
@@ -46,6 +47,9 @@ my %DEFAULT_FOR = (
     auto_connect => 0,
     debug        => 0,
     no_polling   => 0,
+    before       => undef,
+    instead      => undef,
+    after        => undef,
 );
 
 sub new {
@@ -56,7 +60,7 @@ sub new {
     # Set some defaults
     for my $option ( keys %DEFAULT_FOR ) {
         $self->{ $option } = $DEFAULT_FOR{ $option }
-            unless $self->$option;
+            unless defined $self->$option;
     };
 
     return $self;
@@ -97,7 +101,8 @@ sub _handle_api {
     # Set up RPC::ExtDirect::API environment
     {
         my @vars = qw(namespace auto_connect router_path poll_path
-                      remoting_var polling_var no_polling);
+                      remoting_var polling_var no_polling before
+                      instead after);
 
         my @env = map { defined $self->$_ ? ($_ => $self->$_) : () } @vars;
         RPC::ExtDirect::API->import(@env);
@@ -146,21 +151,33 @@ sub _handle_router {
     # When extraction fails, undef is returned by method above
     return $self->_error_response unless defined $router_input;
 
+    # Rebless request as our environment object for compatibility
+    bless $req, 'Plack::Middleware::ExtDirect::Env';
+
     # Routing requests is safe (Router won't croak under torture)
-    my $result = RPC::ExtDirect::Router->route($router_input);
+    my $result = RPC::ExtDirect::Router->route($router_input, $req);
 
-    # We need content length, in octets
-    my $content_length
-        = do { no warnings 'void'; use bytes; length $result->[1] };
+    # Older RPC::ExtDirect version returned two-element array
+    if ( $RPC::ExtDirect::VERSION < 2.00 ) {
+        my $content_type = $result->[0];
+        my $http_body    = $result->[1];
 
-    return [
-                200,
-                [
-                    'Content-Type'   => $result->[0],
-                    'Content-Length' => $content_length,
-                ],
-                [ $result->[1] ],
-           ];
+        my $content_length
+            = do { no warnings; use bytes; length $http_body; };
+
+        $result = [
+            200,
+            [
+                'Content-Type',   $content_type,
+                'Content-Length', $content_length,
+            ],
+            [
+                $http_body,
+            ],
+        ];
+    };
+
+    return $result;
 }
 
 ### PRIVATE INSTANCE METHOD ###
@@ -178,8 +195,10 @@ sub _handle_events {
     return $self->_error_response
         if $env->{REQUEST_METHOD} !~ / \A (GET|POST) \z /xms;
 
+    my $req = Plack::Middleware::ExtDirect::Env->new($env);
+
     # Polling for Events is safe
-    my $http_body = RPC::ExtDirect::EventProvider->poll();
+    my $http_body = RPC::ExtDirect::EventProvider->poll($req);
 
     # We need content length, in octets
     my $content_length
@@ -206,7 +225,7 @@ sub _extract_post_data {
     my ($self, $req) = @_;
 
     # The smartest way to tell if a form was submitted that *I* know of
-    # is to look for 'extAction' and 'extMethod' keywords in CGI params.
+    # is to look for 'extAction' and 'extMethod' keywords in form params.
     my $is_form = $req->param('extAction') && $req->param('extMethod');
 
     # If form is not involved, it's easy: just return raw POST (or undef)
@@ -286,6 +305,38 @@ sub _format_uploads {
 
 sub _error_response { [ 500, [ 'Content-Type' => 'text/html' ], [] ] }
 
+# Small utility class
+package Plack::Middleware::ExtDirect::Env;
+
+use parent 'Plack::Request';
+
+sub http {
+    my ($self, $name) = @_;
+
+    my $hdr = $self->headers;
+
+    return $name ? $hdr->header($name)
+         :         $hdr->header_field_names
+         ;
+}
+
+sub param {
+    my ($self, $name) = @_;
+
+    return $name eq 'POSTDATA' ?   $self->content
+         : $name eq ''         ? ( $self->SUPER::param(), 'POSTDATA' )
+         :                         $self->SUPER::param($name)
+         ;
+}
+
+sub cookie {
+    my ($self, $name) = @_;
+
+    return $name ? $self->cookies()->{ $name }
+         :         keys %{ $self->cookies() }
+         ;
+}
+
 1;
 
 __END__
@@ -298,7 +349,7 @@ Plack::Middleware::ExtDirect - RPC::ExtDirect gateway for Plack
 
 =head1 SYNOPSIS
 
-In your main application, before Plack::Runner->run():
+In your plackup, before C<Plack::Runner-E<gt>run()>:
 
  use My::Server::Side::Class;
  use My::Server::Side::Class2;
@@ -316,7 +367,10 @@ In your app.psgi:
                         namespace    => 'myApp',    # Defaults to empty
                         auto_connect => 0,
                         no_polling   => 0,
-                        debug        => 0;
+                        debug        => 0,
+                        before       => \&global_before_hook,
+                        after        => \&global_after_hook,
+                        ;
     $app;
  }
 
@@ -326,9 +380,9 @@ This module provides RPC::ExtDirect gateway implementation for Plack
 environment. It is packaged as standard Plack middleware component
 suitable for use with Plack::Builder.
 
-You can change some default configuration options by passing relevant
-parameters like shown above. For the meaning of parameters, see
-L<RPC::ExtDirect::API> documentation.
+You can change some default configuration options by passing
+corresponding parameters like shown above. For the meaning of parameters,
+see L<RPC::ExtDirect::API> documentation.
 
 Note that Ext.Direct specification requires server side implementation
 to return diagnostic messages only when debugging is explicitly turned
@@ -338,16 +392,35 @@ where and what error has happened.
 
 =head1 CAVEATS
 
+=head2 Attribute handlers
+
 For RPC::ExtDirect attribute handlers to work properly, modules that
 expose ExtDirect Methods should be loaded at compile time. On the other
 hand, Plack::Runner loads and compiles code in *.psgi at runtime, and
-that breaks attribute magic dust. To avoid this, just make
-sure you load all modules that provide Ext.Direct functionality -
-including Event providers - before Plack::Runner starts. The easiest
-way to do this is to copy plackup script and modify it a little to
-C<use> all relevant modules in it.
+that breaks attribute magic dust. To avoid this, make sure you load
+all modules that provide Ext.Direct functionality - including Event
+providers - before Plack::Runner starts. The easiest way to do this
+is to copy plackup script and modify it a little to C<use>
+all relevant modules in it.
 
 See included code examples to see how it works.
+
+=head2 Environment object
+
+For Plack Ext.Direct gateway, the environment object is based on
+Plack::Request. While it does provide the same methods described
+in L<RPC::ExtDirect/ENVIRONMENT OBJECTS>, behavior of these methods
+can be slightly different from CGI environment. For example,
+C<$env-E<gt>http()> in CGI will return the list of both environment
+variables and HTTP headers in upper case, while the same
+C<$env-E<gt>http()> in Plack application will return only HTTP headers
+as they were defined in HTTP spec. To avoid problems, always find
+the actual header name first and then use it:
+
+    my ($header) = grep { /^Content[-_]Type$/i } $env->http();
+    my $value    = $env->http($header) if $header;
+    
+    ...
 
 =head1 DEPENDENCIES
 
@@ -367,16 +440,21 @@ use it.
 
 =head1 BUGS AND LIMITATIONS
 
-There are no known bugs in this module. To report bugs, use CPAN RT
+There are no known bugs in this module. To report bugs, use github RT
 (the best way) or just drop me an e-mail. Patches are welcome.
 
 =head1 AUTHOR
 
 Alexander Tokarev E<lt>tokarev@cpan.orgE<gt>
 
+=head1 ACKNOWLEDGEMENTS
+
+I would like to thank IntelliSurvey, Inc for sponsoring my work
+on version 2.0 of RPC::ExtDirect suite of modules.
+
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2011 Alexander Tokarev.
+Copyright (c) 2011-2012 Alexander Tokarev.
 
 This module is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself. See L<perlartistic>.
@@ -386,3 +464,4 @@ used and distributed under GPL 3.0 license as provided by Sencha Inc. See
 L<http://www.sencha.com/license>
 
 =cut
+

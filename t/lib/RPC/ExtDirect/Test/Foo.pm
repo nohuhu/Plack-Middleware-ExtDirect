@@ -21,7 +21,7 @@ sub foo_baz : ExtDirect( params => [foo, bar, baz] ) {
                 bar => $param{bar},      baz => $param{baz},
               };
 
-    delete @param{ qw(foo bar baz) };
+    delete @param{ qw(foo bar baz _env) };
     @$ret{ keys %param } = values %param;
 
     return $ret;

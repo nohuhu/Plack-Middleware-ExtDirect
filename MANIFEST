@@ -21,6 +21,7 @@ README
 t/01_api.t
 t/02_router.t
 t/03_poll.t
+t/04_env.t
 t/data/cgi-data/bar.png
 t/data/cgi-data/foo.jpg
 t/data/cgi-data/qux.txt
@@ -28,6 +29,7 @@ t/data/cgi-data/script.js
 t/data/extdirect/api
 t/data/extdirect/poll
 t/data/extdirect/route
+t/data/extdirect/env
 t/lib/RPC/ExtDirect/Demo/PollProvider.pm
 t/lib/RPC/ExtDirect/Demo/Profile.pm
 t/lib/RPC/ExtDirect/Demo/TestAction.pm
@@ -36,4 +38,5 @@ t/lib/RPC/ExtDirect/Test/Foo.pm
 t/lib/RPC/ExtDirect/Test/JuiceBar.pm
 t/lib/RPC/ExtDirect/Test/PollProvider.pm
 t/lib/RPC/ExtDirect/Test/Qux.pm
+t/lib/RPC/ExtDirect/Test/Env.pm
 t/pod.t

@@ -1,11 +1,11 @@
-Plack-Middleware-ExtDirect version 1.00
+Plack-Middleware-ExtDirect version 2.00
 =======================================
 
 This module implements RPC::ExtDirect gateway for Plack environment,
 allowing it to be used with any PSGI compliant application.
 
 RPC::ExtDirect is an implementation of Ext.Direct remoting protocol
-used in Sencha Inc. ExtJS JavaScript framework.
+used in Sencha Inc. Ext JS JavaScript framework.
 
 For more information, see RPC::ExtDirect documentation.
 
@@ -32,12 +32,12 @@ This module requires these other modules and libraries:
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2011 by Alexander Tokarev, <tokarev@cpan.org>
+Copyright (C) 2011-2012 by Alexander Tokarev, <tokarev@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.6.0 or,
-at your option, any later version of Perl 5 you may have available.
+it under the same terms as Perl itself. See perlartistic.
 
-Included ExtJS examples are copyright (c) 2011, Sencha Inc. Example code is
-used and distributed under GPL 3.0 license as provided by Sencha Inc. See
-L<http://www.sencha.com/license>
+Included Ext JS examples are copyright (c) 2011, Sencha Inc. Example code
+is used and distributed under GPL 3.0 license as provided by Sencha Inc.
+See <http://www.sencha.com/license>
+

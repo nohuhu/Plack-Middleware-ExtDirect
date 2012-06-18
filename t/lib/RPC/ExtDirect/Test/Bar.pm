@@ -16,6 +16,8 @@ sub bar_bar : ExtDirect(5) { shift; return scalar @_; }
 sub bar_baz : ExtDirect( formHandler ) {
     my ($class, %param) = @_;
 
+    my $env = delete $param{_env};
+
     # Simulate uploaded file handling
     my $uploads = $param{file_uploads};
     return \%param unless $uploads;
