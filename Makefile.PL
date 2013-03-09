@@ -12,7 +12,7 @@ WriteMakefile(
     },
     PREREQ_PM         => {
         'Plack'          => '0.9988',
-        'RPC::ExtDirect' => '2.00',
+        'RPC::ExtDirect' => '2.12',
     },
     ABSTRACT => 'RPC::ExtDirect gateway for Plack environment',
     AUTHOR   => 'Alexander Tokarev <tokarev@cpan.org>',

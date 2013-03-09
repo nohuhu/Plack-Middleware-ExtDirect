@@ -18,6 +18,7 @@ use Plack::Util::Accessor qw( api_path      router_path
                               auto_connect  debug
                               no_polling    before
                               instead       after
+                              router        event_provider
                             );
 
 use RPC::ExtDirect::Config;
@@ -30,7 +31,7 @@ use RPC::ExtDirect::EventProvider;
 # Version of the module
 #
 
-our $VERSION = '2.00';
+our $VERSION = '2.01';
 
 ### PUBLIC INSTANCE METHOD (CONSTRUCTOR) ###
 #
@@ -38,18 +39,20 @@ our $VERSION = '2.00';
 #
 
 my %DEFAULT_FOR = (
-    api_path     => '/extdirect_api',
-    router_path  => '/extdirect_router',
-    poll_path    => '/extdirect_events',
-    remoting_var => 'Ext.app.REMOTING_API',
-    polling_var  => 'Ext.app.POLLING_API',
-    namespace    => '',
-    auto_connect => 0,
-    debug        => 0,
-    no_polling   => 0,
-    before       => undef,
-    instead      => undef,
-    after        => undef,
+    api_path       => '/extdirect_api',
+    router_path    => '/extdirect_router',
+    poll_path      => '/extdirect_events',
+    remoting_var   => 'Ext.app.REMOTING_API',
+    polling_var    => 'Ext.app.POLLING_API',
+    namespace      => '',
+    auto_connect   => 0,
+    debug          => 0,
+    no_polling     => 0,
+    before         => undef,
+    instead        => undef,
+    after          => undef,
+    router         => 'RPC::ExtDirect::Router',
+    event_provider => 'RPC::ExtDirect::EventProvider',
 );
 
 sub new {
@@ -134,9 +137,13 @@ sub _handle_api {
 
 sub _handle_router {
     my ($self, $env) = @_;
+    
+    my $router = $self->router;
+    
+    no strict 'refs';
 
-    # Set the debug flag
-    local $RPC::ExtDirect::Router::DEBUG = $self->debug;
+    # This insanity is going away sometime soon...
+    local ${$router.'::DEBUG'} = $self->debug;
 
     # Throw an error if any method but POST is used
     return $self->_error_response
@@ -155,7 +162,7 @@ sub _handle_router {
     bless $req, 'Plack::Middleware::ExtDirect::Env';
 
     # Routing requests is safe (Router won't croak under torture)
-    my $result = RPC::ExtDirect::Router->route($router_input, $req);
+    my $result = $router->route($router_input, $req);
 
     # Older RPC::ExtDirect version returned two-element array
     if ( $RPC::ExtDirect::VERSION < 2.00 ) {
@@ -187,9 +194,13 @@ sub _handle_router {
 
 sub _handle_events {
     my ($self, $env) = @_;
+    
+    my $provider = $self->event_provider;
+    
+    no strict 'refs';
 
-    # First set the debug flag
-    local $RPC::ExtDirect::EventProvider::DEBUG = $self->debug;
+    # This is also insane, needs refactoring ASAP
+    local ${$provider.'::DEBUG'} = $self->debug;
 
     # Only GET and POST methods are supported for polling
     return $self->_error_response
@@ -198,7 +209,7 @@ sub _handle_events {
     my $req = Plack::Middleware::ExtDirect::Env->new($env);
 
     # Polling for Events is safe
-    my $http_body = RPC::ExtDirect::EventProvider->poll($req);
+    my $http_body = $provider->poll($req);
 
     # We need content length, in octets
     my $content_length
