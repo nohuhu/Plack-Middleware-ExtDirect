@@ -8,64 +8,52 @@ use strict;
 use warnings;
 no  warnings 'uninitialized';       ## no critic
 
+use Carp;
 use IO::File;
 
 use Plack::Request;
 use Plack::Util;
-use Plack::Util::Accessor qw( api_path      router_path
-                              poll_path     namespace
-                              remoting_var  polling_var
-                              auto_connect  debug
-                              no_polling    before
-                              instead       after
-                              router        event_provider
-                            );
 
+use RPC::ExtDirect::Util::Accessor;
 use RPC::ExtDirect::Config;
 use RPC::ExtDirect::API;
-use RPC::ExtDirect::Router;
-use RPC::ExtDirect::EventProvider;
+use RPC::ExtDirect;
+
+#
+# This module is not compatible with RPC::ExtDirect < 3.0
+#
+
+croak __PACKAGE__." requires RPC::ExtDirect 3.0+"
+    if $RPC::ExtDirect::VERSION < 3.0;
 
 ### PACKAGE GLOBAL VARIABLE ###
 #
 # Version of the module
 #
 
-our $VERSION = '2.01';
+our $VERSION = '3.00_01';
 
 ### PUBLIC INSTANCE METHOD (CONSTRUCTOR) ###
 #
 # Instantiates a new Plack::Middleware::ExtDirect object
 #
 
-my %DEFAULT_FOR = (
-    api_path       => '/extdirect_api',
-    router_path    => '/extdirect_router',
-    poll_path      => '/extdirect_events',
-    remoting_var   => 'Ext.app.REMOTING_API',
-    polling_var    => 'Ext.app.POLLING_API',
-    namespace      => '',
-    auto_connect   => 0,
-    debug          => 0,
-    no_polling     => 0,
-    before         => undef,
-    instead        => undef,
-    after          => undef,
-    router         => 'RPC::ExtDirect::Router',
-    event_provider => 'RPC::ExtDirect::EventProvider',
-);
-
 sub new {
-    my $class = shift;
-
-    my $self = $class->SUPER::new(@_);
-
-    # Set some defaults
-    for my $option ( keys %DEFAULT_FOR ) {
-        $self->{ $option } = $DEFAULT_FOR{ $option }
-            unless defined $self->$option;
-    };
-
+    my ($class, $params) = @_;
+    
+    my $api    = delete $params->{api}    || RPC::ExtDirect->get_api();
+    my $config = delete $params->{config} || $api->config;
+    
+    # These two are not method calls, they need to do their stuff *before*
+    # we have found $self
+    _decorate_config($config);
+    _process_params($api, $config, $params);
+    
+    my $self = $class->SUPER::new($params);
+    
+    $self->config($config);
+    $self->api($api);
+    
     return $self;
 }
 
@@ -76,19 +64,84 @@ sub new {
 
 sub call {
     my ($self, $env) = @_;
+    
+    my $config = $self->config;
 
     # Run the relevant handler
     for ( $env->{PATH_INFO} ) {
-        return $self->_handle_api($env)    if $_ =~ $self->api_path;
-        return $self->_handle_router($env) if $_ =~ $self->router_path;
-        return $self->_handle_events($env) if $_ =~ $self->poll_path;
+        return $self->_handle_api($env)    if $_ =~ $config->api_path;
+        return $self->_handle_router($env) if $_ =~ $config->router_path;
+        return $self->_handle_events($env) if $_ =~ $config->poll_path;
     };
 
     # Not our URI, fall through
     return $self->app->($env);
 }
 
+### PUBLIC INSTANCE METHODS ###
+#
+# Read-write accessors
+#
+
+RPC::ExtDirect::Util::Accessor->mk_accessors(
+    simple => [qw/ api config /],
+);
+
 ############## PRIVATE METHODS BELOW ##############
+
+### PRIVATE PACKAGE SUBROUTINE ###
+#
+# Decorate a Config object with __PACKAGE__-specific accessors
+#
+
+sub _decorate_config {
+    my ($config) = @_;
+    
+    $config->add_accessors(
+        overwrite => 1,
+        complex   => [{
+            accessor => 'router_class_plack',
+            fallback => 'router_class',
+        }, {
+            accessor => 'eventprovider_class_plack',
+            fallback => 'eventprovider_class',
+        }],
+    );
+}
+
+### PRIVATE PACKAGE SUBROUTINE ###
+#
+# Process parameters directly passed to the constructor
+# and set the Config/API options accordingly
+#
+
+sub _process_params {
+    my ($api, $config, $params) = @_;
+    
+    # We used to accept these parameters directly in the constructor;
+    # this behavior is not recommended now but it doesn't make much sense
+    # to deprecate it either
+    my @compat_params = qw/
+        api_path router_path poll_path namespace remoting_var polling_var
+        auto_connect debug no_polling
+    /;
+    
+    for my $var ( @compat_params ) {
+        $config->$var( delete $params->{$var} ) if exists $params->{$var};
+    }
+    
+    $config->router_class_plack( delete $params->{router} )
+        if exists $params->{router};
+    
+    $config->eventprovider_class_plack( delete $params->{event_provider} )
+        if exists $params->{event_provider};
+    
+    for my $type ( $api->HOOK_TYPES ) {
+        my $code = delete $params->{ $type } if exists $params->{ $type };
+        
+        $api->add_hook( type => $type, code => $code ) if defined $code;
+    }
+}
 
 ### PRIVATE INSTANCE METHOD ###
 #
@@ -98,21 +151,10 @@ sub call {
 sub _handle_api {
     my ($self, $env) = @_;
 
-    # Set the debug flag first
-    local $RPC::ExtDirect::API::DEBUG = $self->debug;
-
-    # Set up RPC::ExtDirect::API environment
-    {
-        my @vars = qw(namespace auto_connect router_path poll_path
-                      remoting_var polling_var no_polling before
-                      instead after);
-
-        my @env = map { defined $self->$_ ? ($_ => $self->$_) : () } @vars;
-        RPC::ExtDirect::API->import(@env);
-    }
-
-    # Get the API JavaScript
-    my $js = eval { RPC::ExtDirect::API->get_remoting_api() };
+    # Get the API JavaScript chunk
+    my $js = eval {
+        $self->api->get_remoting_api( config => $self->config )
+    };
 
     # If JS API call failed, return error
     return $self->_error_response if $@;
@@ -138,18 +180,14 @@ sub _handle_api {
 sub _handle_router {
     my ($self, $env) = @_;
     
-    my $router = $self->router;
-    
-    no strict 'refs';
-
-    # This insanity is going away sometime soon...
-    local ${$router.'::DEBUG'} = $self->debug;
-
     # Throw an error if any method but POST is used
     return $self->_error_response
         unless $env->{REQUEST_METHOD} eq 'POST';
+    
+    my $config = $self->config;
+    my $api    = $self->api;
 
-    # Now we need Request object
+    # Now we need a Request object
     my $req = Plack::Request->new($env);
 
     # Try to distinguish between raw POST and form call
@@ -159,30 +197,19 @@ sub _handle_router {
     return $self->_error_response unless defined $router_input;
 
     # Rebless request as our environment object for compatibility
-    bless $req, 'Plack::Middleware::ExtDirect::Env';
-
+    bless $req, __PACKAGE__.'::Env';
+    
+    my $router_class = $config->router_class_plack;
+    
+    eval "require $router_class";
+    
+    my $router = $router_class->new(
+        config => $config,
+        api    => $api,
+    );
+    
     # Routing requests is safe (Router won't croak under torture)
     my $result = $router->route($router_input, $req);
-
-    # Older RPC::ExtDirect version returned two-element array
-    if ( $RPC::ExtDirect::VERSION < 2.00 ) {
-        my $content_type = $result->[0];
-        my $http_body    = $result->[1];
-
-        my $content_length
-            = do { no warnings; use bytes; length $http_body; };
-
-        $result = [
-            200,
-            [
-                'Content-Type',   $content_type,
-                'Content-Length', $content_length,
-            ],
-            [
-                $http_body,
-            ],
-        ];
-    };
 
     return $result;
 }
@@ -195,18 +222,23 @@ sub _handle_router {
 sub _handle_events {
     my ($self, $env) = @_;
     
-    my $provider = $self->event_provider;
-    
-    no strict 'refs';
-
-    # This is also insane, needs refactoring ASAP
-    local ${$provider.'::DEBUG'} = $self->debug;
-
     # Only GET and POST methods are supported for polling
     return $self->_error_response
         if $env->{REQUEST_METHOD} !~ / \A (GET|POST) \z /xms;
 
     my $req = Plack::Middleware::ExtDirect::Env->new($env);
+    
+    my $config = $self->config;
+    my $api    = $self->api;
+    
+    my $provider_class = $config->eventprovider_class_plack;
+    
+    eval "require $provider_class";
+    
+    my $provider = $provider_class->new(
+        config => $config,
+        api    => $api,
+    );
 
     # Polling for Events is safe
     my $http_body = $provider->poll($req);

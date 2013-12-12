@@ -10,6 +10,8 @@ use Plack::Builder;
 use Plack::Test;
 use HTTP::Request;
 
+use RPC::ExtDirect::Test::Util;
+
 # Test modules
 use lib 't/lib';
 use RPC::ExtDirect::Test::Foo;
@@ -53,10 +55,12 @@ for my $test ( @$tests ) {
 
         my $http_content = $res->content;
 
-        # Remove whitespace
-        s/\s//g for $expected_content, $http_content;
+        my $actual_data   = deparse_api($http_content);
+        my $expected_data = deparse_api($expected_content);
 
-        is $http_content, $expected_content, "$name content";
+        is_deeply $actual_data, $expected_data, "$name content"
+            or diag explain "actual:\n",   $actual_data,
+                            "expected:\n", $expected_data;
     };
 
     test_psgi app => $test_app, client => $test_client;

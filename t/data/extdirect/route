@@ -11,7 +11,7 @@
         q|            ', or } expected while parsing object/hash,|.
         q|             at character offset 22 (before \":\"here\"}\")'",|.
         q| "method":null, "tid": null, "type":"exception",|.
-        q| "where":"RPC::ExtDirect::Deserialize->decode_post"}|,
+        q| "where":"RPC::ExtDirect::Serializer->decode_post"}|,
     },
     {
         name => 'Valid raw POST, single request', method => 'POST',
