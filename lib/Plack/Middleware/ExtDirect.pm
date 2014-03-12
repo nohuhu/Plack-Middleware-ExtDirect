@@ -24,7 +24,7 @@ use RPC::ExtDirect;
 #
 
 croak __PACKAGE__." requires RPC::ExtDirect 3.0+"
-    if $RPC::ExtDirect::VERSION < 3.0;
+    if $RPC::ExtDirect::VERSION lt 3.0;
 
 ### PACKAGE GLOBAL VARIABLE ###
 #
@@ -39,17 +39,19 @@ our $VERSION = '3.00_01';
 #
 
 sub new {
-    my ($class, $params) = @_;
+    my $class = shift;
     
-    my $api    = delete $params->{api}    || RPC::ExtDirect->get_api();
-    my $config = delete $params->{config} || $api->config;
+    my %params = @_ == 1 && 'HASH' eq ref($_[0]) ? %{ $_[0] } : @_;
+    
+    my $api    = delete $params{api}    || RPC::ExtDirect->get_api();
+    my $config = delete $params{config} || $api->config;
     
     # These two are not method calls, they need to do their stuff *before*
     # we have found $self
     _decorate_config($config);
-    _process_params($api, $config, $params);
+    _process_params($api, $config, \%params);
     
-    my $self = $class->SUPER::new($params);
+    my $self = $class->SUPER::new(%params);
     
     $self->config($config);
     $self->api($api);
