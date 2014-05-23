@@ -69,11 +69,12 @@ sub call {
     
     my $config = $self->config;
 
-    # Run the relevant handler
+    # Run the relevant handler. Router calls are the most frequent
+    # so we test for them first
     for ( $env->{PATH_INFO} ) {
-        return $self->_handle_api($env)    if $_ =~ $config->api_path;
         return $self->_handle_router($env) if $_ =~ $config->router_path;
         return $self->_handle_events($env) if $_ =~ $config->poll_path;
+        return $self->_handle_api($env)    if $_ =~ $config->api_path;
     };
 
     # Not our URI, fall through
@@ -314,7 +315,7 @@ sub _extract_post_data {
     # Remove extType because it's meaningless later on
     delete $keyword{ extType };
 
-    # Fix TID so that it comes as number (JavaScript is picky)
+    # Fix TID so that it comes as a number (JavaScript is picky)
     $keyword{ extTID } += 0 if exists $keyword{ extTID };
 
     return \%keyword;
@@ -351,7 +352,8 @@ sub _format_uploads {
 sub _error_response { [ 500, [ 'Content-Type' => 'text/html' ], [] ] }
 
 # Small utility class
-package Plack::Middleware::ExtDirect::Env;
+package
+    Plack::Middleware::ExtDirect::Env;
 
 use parent 'Plack::Request';
 
