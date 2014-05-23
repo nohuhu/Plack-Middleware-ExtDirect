@@ -12,10 +12,10 @@ WriteMakefile(
     },
     PREREQ_PM         => {
         'Plack'          => '0.9988',
-        'RPC::ExtDirect' => '2.12',
+        'RPC::ExtDirect' => '3.0',
     },
-    ABSTRACT => 'RPC::ExtDirect gateway for Plack environment',
-    AUTHOR   => 'Alexander Tokarev <tokarev@cpan.org>',
+    ABSTRACT => 'RPC::ExtDirect gateway for Plack',
+    AUTHOR   => 'Alex Tokarev <tokarev@cpan.org>',
     LICENSE  => 'perl',
     META_MERGE => {
         resources   => {
