@@ -19,6 +19,7 @@ In your C<app.psgi>:
 
     use RPC::ExtDirect::Config;
     
+    # Ext.Direct Action packages go here
     use My::Server::Foo;
     use My::Server::Bar;
     
@@ -36,9 +37,9 @@ In your C<app.psgi>:
         $app;
     }
 
-=for readme continue
-
 =head1 DESCRIPTION
+
+=for readme continue
 
 This module provides an L<RPC::ExtDirect> gateway implementation for
 L<Plack> environment. It is packaged as a standard Plack middleware
@@ -58,15 +59,16 @@ in L<RPC::ExtDirect::Intro>.
 
 =head2 Configuration
 
-To configure Plack::Middleware::ExtDirect instance, you will need
+To configure a Plack::Middleware::ExtDirect instance, you will need
 to create an instance of L<RPC::ExtDirect::Config> with all required
-options set, and pass it to Plack::Middleware::ExtDirect
-L<constructor|/new> to be used. This step is optional; by default the
-Config instance in the L<global API instance|/"GLOBAL API TREE INSTANCE">
+options set, and pass it to Plack::Middleware::ExtDirect constructor
+via L<Plack::Builder>'s C<enable> feature as shown in L</SYNOPSIS>.
+This step is optional; by default the Config instance in the
+L<global API instance|RPC::ExtDirect::API/"GLOBAL API TREE INSTANCE">
 will be used instead.
 
-Refer to L<RPC::ExtDirect::Config/OPTIONS> for the list of configuration
-options and their default values.
+Refer to L<RPC::ExtDirect::Config/OPTIONS> for the list of
+configuration options and their default values.
 
 =head2 Entry points
 
@@ -84,7 +86,9 @@ The entry point URIs are configured with the
 L<api_path|RPC::ExtDirect::Config/api_path>,
 L<router_path|RPC::ExtDirect::Config/router_path>, and
 L<poll_path|RPC::ExtDirect::Config/poll_path> Config options as shown
-in the L</SYNOPSIS>.
+in the L</SYNOPSIS>. These configuration options have default values
+that will work out of box; refer to L<RPC::ExtDirect::Config> for
+details.
 
 =head1 CAVEATS
 
@@ -172,7 +176,7 @@ In fact the code above I<is> about the whole C<plackup> script.
 
 For Plack Ext.Direct gateway, the environment object is based on
 L<Plack::Request>. While it does provide the same methods described
-in L<RPC::ExtDirect/ENVIRONMENT OBJECTS>, behavior of these methods
+in L<RPC::ExtDirect/"ENVIRONMENT OBJECTS">, behavior of these methods
 can be slightly different from other environments.
 
 For example, C<< $env->http() >> in L<CGI::ExtDirect> will return
@@ -183,7 +187,9 @@ return only HTTP headers as they were defined in HTTP spec.
 To avoid potential problems, always find the actual header name
 first and then use it:
 
-    my ($header) = grep { /^Content[-_]Type$/i } $env->http();
+    use List::Util qw/ first /;
+    
+    my ($header) = first { /^Content[-_]Type$/i } $env->http();
     my $value    = $env->http($header) if $header;
     
     ...

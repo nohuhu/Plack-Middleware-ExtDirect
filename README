@@ -1,8 +1,6 @@
 Plack::Middleware::ExtDirect
 ============================
 
-DESCRIPTION
-
     This module provides an RPC::ExtDirect gateway implementation for Plack
     environment. It is packaged as a standard Plack middleware component
     suitable for using with Plack::Builder.
