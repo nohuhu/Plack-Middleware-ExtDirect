@@ -24,7 +24,7 @@ use RPC::ExtDirect;
 #
 
 croak __PACKAGE__." requires RPC::ExtDirect 3.0+"
-    if $RPC::ExtDirect::VERSION lt 3.0;
+    if $RPC::ExtDirect::VERSION lt '3.0';
 
 ### PACKAGE GLOBAL VARIABLE ###
 #
