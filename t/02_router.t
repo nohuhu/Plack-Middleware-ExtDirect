@@ -1,6 +1,5 @@
 use strict;
 use warnings;
-no  warnings 'uninitialized';       ## no critic
 
 use RPC::ExtDirect::Test::Pkg::Foo;
 use RPC::ExtDirect::Test::Pkg::Bar;
