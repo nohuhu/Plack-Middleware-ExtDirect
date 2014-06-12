@@ -258,15 +258,11 @@ Use L<Github tracker|https://github.com/nohuhu/Plack-Middleware-ExtDirect/issues
 to open bug reports. This is the easiest and quickest way to get your
 issue fixed.
 
-=head1 AUTHOR
-
-Alex Tokarev E<lt>tokarev@cpan.orgE<gt>
-
 =for readme continue
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2011-2014 Alexander Tokarev.
+Copyright (c) 2011-2014 Alex Tokarev E<lt>tokarev@cpan.orgE<gt>.
 
 This module is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself. See L<perlartistic>.
