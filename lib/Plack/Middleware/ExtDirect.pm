@@ -2,8 +2,6 @@ package Plack::Middleware::ExtDirect;
 
 use parent 'Plack::Middleware';
 
-# ABSTRACT: Ext.Direct gateway implementation for Plack
-
 use strict;
 use warnings;
 no  warnings 'uninitialized';       ## no critic
