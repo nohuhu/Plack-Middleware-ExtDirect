@@ -1,3 +1,8 @@
+3.0   Thu Jun 12 19:12:56 2014
+    - Updated to accommodate for the changes in RPC::ExtDirect 3.0
+    - Many bug fixes, the bulk of the test data moved to the core
+    - More documentation
+
 2.01  Fri Mar 8  21:24:38 2013
     - Added a way to specify class overrides for RPC::ExtDirect.
       No major changes.

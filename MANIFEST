@@ -1,6 +1,5 @@
 Changes
 examples/app.psgi
-examples/plackup_oldperl
 examples/htdocs/direct-form.html
 examples/htdocs/direct-form.js
 examples/htdocs/direct-grid.html
@@ -14,6 +13,7 @@ examples/htdocs/examples.js
 examples/htdocs/index.html
 examples/htdocs/named-arguments.html
 examples/htdocs/named-arguments.js
+examples/plackup_oldperl
 lib/Plack/Middleware/ExtDirect.pm
 lib/Plack/Middleware/ExtDirect.pod
 Makefile.PL
