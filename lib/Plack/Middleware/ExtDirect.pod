@@ -251,8 +251,8 @@ on versions 2.x and 3.x of the RPC::ExtDirect suite of modules.
 
 =head1 BUGS AND LIMITATIONS
 
-There are no known bugs in this module. Please report problems to the
-author, patches are always welcome.
+At this time there are no known bugs in this module. Please report
+problems to the author, patches are always welcome.
 
 Use L<Github tracker|https://github.com/nohuhu/Plack-Middleware-ExtDirect/issues>
 to open bug reports. This is the easiest and quickest way to get your
