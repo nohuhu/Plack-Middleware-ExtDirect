@@ -35,7 +35,7 @@ WriteMakefile(
             },
             PREREQ_PM => {
                 'Plack'          => '1.0',
-                'RPC::ExtDirect' => '3.01',
+                'RPC::ExtDirect' => '3.02',
             },
         )
         :(
@@ -44,7 +44,7 @@ WriteMakefile(
             },
             PREREQ_PM => {
                 'Plack'          => '1.0',
-                'RPC::ExtDirect' => '3.01',
+                'RPC::ExtDirect' => '3.02',
             },
         )
     ),
