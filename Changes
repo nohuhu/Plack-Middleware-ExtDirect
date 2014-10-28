@@ -1,4 +1,11 @@
-3.0   Thu Jun 12 19:12:56 2014
+3.01  Mon Oct 27 17:54:02 PDT 2014
+    - Fixed a bug  with wrong utf-8 encoding that caused grief
+      to IE8 users (Github issue #1)
+    - Some test fixes and improvements for Windows environment
+    - Miscellaneous doc fixes and touch-ups
+    - RPC::ExtDirect dependency bumped to 3.02
+
+3.0   Thu Jun 12 19:12:56 PDT 2014
     - Updated to accommodate for the changes in RPC::ExtDirect 3.0
     - Many bug fixes, the bulk of the test data moved to the core
     - More documentation
