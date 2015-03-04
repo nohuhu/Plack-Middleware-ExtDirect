@@ -30,7 +30,7 @@ sub run_tests {
     my $cmp_pkg   = 'RPC::ExtDirect::Test::Util';
     my $num_tests = @run_only || @$tests;
     
-    plan tests => 4 * $num_tests;
+    plan tests => 5 * $num_tests;
     
     TEST:
     for my $test ( @$tests ) {
@@ -70,21 +70,28 @@ sub run_tests {
             my $res = $cb->($req);
 
             if ( ok $res, "$name not empty" ) {
-                my $want_type = $output->{content_type};
-                my $have_type = $res->content_type;
-                
-                like $have_type, $want_type, "$name content type";
-
                 my $want_status = $output->{status};
                 my $have_status = $res->code;
                 
-                is $have_status, $want_status, "$name HTTP status";
+                is $have_status, $want_status, "$name: HTTP status";
                 
+                my $want_type = $output->{content_type};
+                my $have_type = $res->content_type;
+                
+                like $have_type, $want_type, "$name: content type";
+
+                my $want_len = defined $output->{plack_content_length} 
+                             ? $output->{plack_content_length}
+                             : $output->{content_length};
+                my $have_len = $res->content_length;
+
+                is $have_len, $want_len, "$name: content length";
+
                 my $cmp_fn = $output->{comparator};
                 my $want   = $output->{plack_content} || $output->{content};
                 my $have   = $res->content;
                 
-                $cmp_pkg->$cmp_fn($have, $want, "$name content");
+                $cmp_pkg->$cmp_fn($have, $want, "$name: content");
             };
         };
 

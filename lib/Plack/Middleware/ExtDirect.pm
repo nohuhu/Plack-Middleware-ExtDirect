@@ -12,6 +12,7 @@ use IO::File;
 use Plack::Request;
 use Plack::Util;
 
+use RPC::ExtDirect::Util ();
 use RPC::ExtDirect::Util::Accessor;
 use RPC::ExtDirect::Config;
 use RPC::ExtDirect::API;
@@ -309,6 +310,11 @@ sub _extract_post_data {
 
         $keyword{ '_uploads' } = \@field_uploads if @field_uploads;
     };
+
+    # Metadata is JSON encoded; decode_metadata lives by side effects!
+    if ( exists $keyword{metadata} ) {
+        RPC::ExtDirect::Util::decode_metadata($self, \%keyword);
+    }
 
     # Remove extType because it's meaningless later on
     delete $keyword{ extType };
