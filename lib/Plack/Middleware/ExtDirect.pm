@@ -30,7 +30,7 @@ croak __PACKAGE__." requires RPC::ExtDirect 3.0+"
 # Version of the module
 #
 
-our $VERSION = '3.02';
+our $VERSION = '3.20';
 
 ### PUBLIC INSTANCE METHOD (CONSTRUCTOR) ###
 #
